@@ -17,7 +17,7 @@ Windows, macOS ve Linux'ta çalışır; her üçü için de tek dosyalık paket 
 ### A) Hazır tek dosya (önerilen — Python gerekmez)
 
 **İndirme:** <https://github.com/msoguz44/cumhuriyet-ses-konsolu/releases/tag/v1.0>
-(depo özel olduğu için indirirken GitHub hesabınızla giriş yapmış olmanız gerekir)
+— giriş yapmadan, doğrudan indirilebilir.
 
 | İşletim sistemi | Dosya | Nasıl açılır |
 |---|---|---|
