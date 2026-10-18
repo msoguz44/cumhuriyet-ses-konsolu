@@ -6,6 +6,12 @@ on:
   push:
     tags: ["v*"]
 
+env:
+  # Windows konsolu varsayılan olarak cp1252; Türkçe çıktılar için UTF-8 şart.
+  PYTHONUTF8: "1"
+  PYTHONIOENCODING: "utf-8"
+  QT_QPA_PLATFORM: offscreen
+
 jobs:
   derle:
     name: ${{ matrix.ad }}
@@ -50,9 +56,9 @@ jobs:
           python -m pip install PySide6 pyinstaller
 
       - name: Simgeleri üret
+        # Simgeler depoda hazır; bu adım yalnızca tazeler, aksarsa derleme sürsün.
+        continue-on-error: true
         run: python paket/simge_uret.py
-        env:
-          QT_QPA_PLATFORM: offscreen
 
       - name: Derle
         run: ${{ matrix.betik }}

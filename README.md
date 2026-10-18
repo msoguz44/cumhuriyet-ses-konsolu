@@ -28,8 +28,8 @@ Windows, macOS ve Linux'ta çalışır; her üçü için de tek dosyalık paket 
 > Mac `.dmg`'si Windows'ta üretilemez.
 
 **En kolay yol — GitHub Actions (tek bilgisayarla üçünü birden):**
-klasörü GitHub'a yükleyin, depoda **Actions → “Paketler (Windows · macOS · Linux)” → Run workflow**
-deyin. Birkaç dakika sonra üç paket de sayfanın altındaki **Artifacts** bölümünden iner.
+depo zaten GitHub'da: <https://github.com/msoguz44/cumhuriyet-ses-konsolu>.
+**Actions → “Paketler (Windows · macOS · Linux)” → Run workflow** deyin. Birkaç dakika sonra üç paket de sayfanın altındaki **Artifacts** bölümünden iner.
 `v1.0` gibi bir etiket gönderirseniz paketler doğrudan **Releases**'e de eklenir.
 
 **Kendi bilgisayarınızda:**

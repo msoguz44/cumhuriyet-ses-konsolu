@@ -17,6 +17,13 @@ from simge import _cizim                     # noqa: E402
 
 
 def main() -> int:
+    # Windows konsolu cp1252 olabiliyor; Türkçe çıktı hata vermesin.
+    for akis in (sys.stdout, sys.stderr):
+        try:
+            akis.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
     QApplication(sys.argv)
     hedef = Path(__file__).resolve().parent
     buyuk = _cizim(1024)

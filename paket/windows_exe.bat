@@ -2,6 +2,8 @@
 chcp 65001 >nul
 title Cumhuriyet Ses Konsolu - Windows EXE olusturucu
 cd /d "%~dp0\.."
+set PYTHONUTF8=1
+set PYTHONIOENCODING=utf-8
 
 where py >nul 2>nul
 if %errorlevel%==0 (set "PY=py") else (set "PY=python")
