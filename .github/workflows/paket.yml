@@ -1,0 +1,80 @@
+name: Paketler (Windows · macOS · Linux)
+
+# Elle başlatılır ya da "v1.0" gibi bir etiket gönderildiğinde çalışır.
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  derle:
+    name: ${{ matrix.ad }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            ad: Windows (.exe)
+            betik: python -m PyInstaller paket/CumhuriyetSes.spec --noconfirm --clean
+            cikti: dist/CumhuriyetSesKonsolu.exe
+            paket_adi: CumhuriyetSesKonsolu-windows
+          - os: macos-latest
+            ad: macOS (.dmg)
+            betik: bash paket/mac_dmg.sh
+            cikti: dist/CumhuriyetSesKonsolu-mac.dmg
+            paket_adi: CumhuriyetSesKonsolu-macos
+          - os: ubuntu-22.04
+            ad: Linux (tek dosya)
+            betik: python -m PyInstaller paket/CumhuriyetSes.spec --noconfirm --clean
+            cikti: dist/CumhuriyetSesKonsolu
+            paket_adi: CumhuriyetSesKonsolu-linux
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Linux ses/arayüz kitaplıkları
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libxkbcommon-x11-0 libxcb-cursor0 \
+            libpulse0 libasound2 libgl1
+
+      - name: Gerekli paketler
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install PySide6 pyinstaller
+
+      - name: Simgeleri üret
+        run: python paket/simge_uret.py
+        env:
+          QT_QPA_PLATFORM: offscreen
+
+      - name: Derle
+        run: ${{ matrix.betik }}
+
+      - name: Çıktıyı yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.paket_adi }}
+          path: ${{ matrix.cikti }}
+          if-no-files-found: error
+
+  yayin:
+    name: Etikete sürüm ekle
+    needs: derle
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: paketler
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: paketler/**/*
