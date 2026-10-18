@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cumhuriyet Ses Konsolu — 29 Ekim tören ses yönetimi</title>
+<meta name="description" content="29 Ekim Cumhuriyet Bayramı kutlamasında sahne seslerini yöneten ücretsiz masaüstü uygulaması. Windows, macOS ve Linux için tek dosya indirme.">
+<meta property="og:title" content="Cumhuriyet Ses Konsolu">
+<meta property="og:description" content="Tören ve kutlamalarda müzikleri kartlardan yöneten masaüstü ses konsolu.">
+<meta property="og:image" content="ekran-coklu-kart.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="simge.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --zemin:#0B0D12; --panel:#121521; --kart:#1A1F2E; --cizgi:#2C3348;
+    --metin:#EEF1F7; --soluk:#98A2B8; --kirmizi:#E30A17; --kirmizi-acik:#FF3A46;
+    --altin:#F2C14E; --en:1120px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--zemin); color:var(--metin);
+    font-family:Inter,"Segoe UI",-apple-system,Helvetica,Arial,sans-serif;
+    line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+  .kap{max-width:var(--en); margin:0 auto; padding:0 16px}
+  a{color:var(--kirmizi-acik)}
+
+  /* ---------- üst ---------- */
+  header{
+    border-bottom:1px solid var(--cizgi);
+    background:linear-gradient(90deg,#170507 0%,var(--panel) 45%,#141828 100%);
+    position:sticky; top:0; z-index:9;
+  }
+  .ust{display:flex; align-items:center; gap:12px; height:62px}
+  .ust img{width:30px; height:30px; border-radius:8px}
+  .ust b{font-size:16px; letter-spacing:.2px}
+  .ust nav{margin-left:auto; display:flex; gap:18px; font-size:14px}
+  .ust nav a{color:var(--soluk); text-decoration:none; font-weight:600}
+  .ust nav a:hover{color:var(--metin)}
+
+  /* ---------- kahraman ---------- */
+  .kahraman{padding:64px 0 36px; text-align:center}
+  .rozet{
+    display:inline-block; color:var(--kirmizi-acik); font-size:12px; font-weight:800;
+    letter-spacing:3px; border:1px solid #4A1419; background:#1B0A0D;
+    padding:6px 14px; border-radius:999px;
+  }
+  h1{font-size:clamp(32px,5.5vw,54px); line-height:1.1; margin:18px 0 10px; font-weight:800; letter-spacing:-1px}
+  .alt{color:var(--soluk); font-size:clamp(16px,2.2vw,19px); max-width:640px; margin:0 auto}
+
+  .indir{display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin:30px 0 10px}
+  .btn{
+    display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--metin);
+    background:var(--kart); border:1px solid var(--cizgi); border-radius:12px;
+    padding:13px 20px; font-weight:700; font-size:15px; transition:border-color .15s, background .15s;
+  }
+  .btn:hover{background:#222940; border-color:#46516F}
+  .btn.ana{
+    background:linear-gradient(180deg,var(--kirmizi-acik),#A8070F);
+    border-color:#FF5A64; color:#fff;
+  }
+  .btn.ana:hover{background:linear-gradient(180deg,#FF5660,#B4090F)}
+  .btn span{font-weight:500; color:var(--soluk); font-size:13px}
+  .btn.ana span{color:#FFD9DC}
+  .notlar{color:#6B7694; font-size:13px; margin-top:6px}
+
+  .ekran{
+    margin:44px auto 0; max-width:var(--en); border-radius:16px; overflow:hidden;
+    border:1px solid var(--cizgi); box-shadow:0 30px 70px rgba(0,0,0,.55);
+  }
+  .ekran img{display:block; width:100%; height:auto}
+
+  /* ---------- bölümler ---------- */
+  section{padding:58px 0; border-top:1px solid #1B2030}
+  h2{font-size:clamp(22px,3vw,30px); margin:0 0 8px; font-weight:800; letter-spacing:-.4px}
+  .bolum-alt{color:var(--soluk); margin:0 0 28px}
+
+  .izgara{display:grid; grid-template-columns:repeat(auto-fit,minmax(252px,1fr)); gap:16px}
+  .kutu{background:var(--kart); border:1px solid var(--cizgi); border-radius:14px; padding:20px}
+  .kutu h3{margin:10px 0 6px; font-size:16px}
+  .kutu p{margin:0; color:var(--soluk); font-size:14px}
+  .ikon{
+    width:36px; height:36px; border-radius:10px; display:grid; place-items:center;
+    font-size:18px; background:#241017; border:1px solid #42202a;
+  }
+
+  table{width:100%; border-collapse:collapse; font-size:14px}
+  th,td{text-align:left; padding:10px 12px; border-bottom:1px solid #1B2030}
+  th{color:var(--soluk); font-weight:700; font-size:12px; letter-spacing:1px; text-transform:uppercase}
+  kbd{
+    background:#0E1220; border:1px solid var(--cizgi); border-bottom-width:2px;
+    border-radius:6px; padding:2px 8px; font:700 12px/1.6 Inter,monospace; color:var(--altin);
+  }
+
+  .kurulum{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px}
+  .kurulum ol{margin:10px 0 0 18px; padding:0; color:var(--soluk); font-size:14px}
+  .kurulum li{margin-bottom:6px}
+
+  footer{border-top:1px solid #1B2030; padding:30px 0 50px; color:#6B7694; font-size:13px; text-align:center}
+  footer a{color:var(--soluk)}
+  .ay{color:var(--kirmizi-acik)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kap ust">
+    <img src="simge.png" alt="">
+    <b>Cumhuriyet Ses Konsolu</b>
+    <nav>
+      <a href="#indir">İndir</a>
+      <a href="#ozellikler">Özellikler</a>
+      <a href="#kisayollar">Kısayollar</a>
+      <a href="https://github.com/msoguz44/cumhuriyet-ses-konsolu">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="kap kahraman">
+    <span class="rozet">29 EKİM CUMHURİYET BAYRAMI</span>
+    <h1>Törende sesler <span class="ay">tek ekrandan</span> yönetilsin</h1>
+    <p class="alt">
+      Her müzik ekranda bir kart olur. Kartından çalınır, duraklatılır, kaldığı yerden devam eder.
+      Sesler yumuşakça açılıp kapanır; sahnede “pat” diye kesilme olmaz.
+    </p>
+
+    <div class="indir" id="indir">
+      <a class="btn ana" href="https://github.com/msoguz44/cumhuriyet-ses-konsolu/releases/latest/download/CumhuriyetSesKonsolu.exe">
+        ⊞ Windows için indir <span>.exe · 57 MB</span>
+      </a>
+      <a class="btn" href="https://github.com/msoguz44/cumhuriyet-ses-konsolu/releases/latest/download/CumhuriyetSesKonsolu-mac.dmg">
+        🍏 macOS <span>.dmg · 51 MB</span>
+      </a>
+      <a class="btn" href="https://github.com/msoguz44/cumhuriyet-ses-konsolu/releases/latest/download/CumhuriyetSesKonsolu">
+        🐧 Linux <span>tek dosya · 88 MB</span>
+      </a>
+    </div>
+    <p class="notlar">Ücretsiz ve açık kaynak · Kurulum gerektirmez · Python gerekmez</p>
+
+    <div class="ekran">
+      <img src="ekran-coklu-kart.png" alt="Uygulamanın kart görünümü" loading="lazy">
+    </div>
+  </div>
+
+  <section id="ozellikler">
+    <div class="kap">
+      <h2>Tören için düşünülmüş ayrıntılar</h2>
+      <p class="bolum-alt">Sahne arkasında tek kişi, tek ekran, tek tıkla.</p>
+      <div class="izgara">
+        <div class="kutu"><div class="ikon">▶</div><h3>Kartlardan çalma</h3>
+          <p>Büyük düğmeyle çal, aynı düğmeyle duraklat; parça kaldığı yerden devam eder.</p></div>
+        <div class="kutu"><div class="ikon">🎚</div><h3>Yumuşak geçiş</h3>
+          <p>Açılma ve kapanma süresi ayarlanır. Marşlarda kapatıp keskin başlatabilirsiniz.</p></div>
+        <div class="kutu"><div class="ikon">⏱</div><h3>Kalan süre</h3>
+          <p>Alt konsolda büyük puntoyla kalan süre; sunucuya işaret vermek kolay.</p></div>
+        <div class="kutu"><div class="ikon">⤢</div><h3>Ekrana sığdır</h3>
+          <p>“Ekranda 20 kart görünsün” deyin, kartlar sığacak en büyük boyuta ayarlansın.</p></div>
+        <div class="kutu"><div class="ikon">⇅</div><h3>Sürükle-bırak sıra</h3>
+          <p>Program sırası kartları sürükleyerek değişir; dosyalar pencereye bırakılarak eklenir.</p></div>
+        <div class="kutu"><div class="ikon">🔇</div><h3>Acil durdurma</h3>
+          <p><kbd>Esc</kbd> sesi yumuşakça kısar, <kbd>K</kbd> anında keser.</p></div>
+        <div class="kutu"><div class="ikon">🏷</div><h3>Etiket ve renk</h3>
+          <p>“İstiklal Marşı”, “Saygı Duruşu” gibi etiketler ve kart renkleriyle hızlı ayırt edin.</p></div>
+        <div class="kutu"><div class="ikon">💾</div><h3>Kendiliğinden kayıt</h3>
+          <p>Liste ve ayarlar saklanır; program dosyası olarak yedeklenip taşınabilir.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="kap">
+      <h2>Nasıl açılır</h2>
+      <p class="bolum-alt">İndirdiğiniz dosya tek başına çalışır, kurulum yoktur.</p>
+      <div class="kurulum">
+        <div class="kutu">
+          <h3>Windows</h3>
+          <ol>
+            <li><code>CumhuriyetSesKonsolu.exe</code> dosyasını indirin.</li>
+            <li>Çift tıklayın.</li>
+            <li>“Windows kişisel bilgisayarınızı korudu” uyarısı çıkarsa
+                <b>Daha fazla bilgi → Yine de çalıştır</b>.</li>
+          </ol>
+        </div>
+        <div class="kutu">
+          <h3>macOS</h3>
+          <ol>
+            <li><code>CumhuriyetSesKonsolu-mac.dmg</code> dosyasını açın.</li>
+            <li>Uygulamayı <b>Applications</b> klasörüne sürükleyin.</li>
+            <li>İlk açılışta uygulamaya <b>sağ tık → Aç</b> deyin.</li>
+          </ol>
+        </div>
+        <div class="kutu">
+          <h3>Linux</h3>
+          <ol>
+            <li><code>CumhuriyetSesKonsolu</code> dosyasını indirin.</li>
+            <li><code>chmod +x CumhuriyetSesKonsolu</code></li>
+            <li><code>./CumhuriyetSesKonsolu</code></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="kisayollar">
+    <div class="kap">
+      <h2>Klavye kısayolları</h2>
+      <p class="bolum-alt">Tören sırasında en hızlı yol.</p>
+      <table>
+        <thead><tr><th style="width:190px">Tuş</th><th>İş</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>Boşluk</kbd></td><td>Duraklat / devam ettir</td></tr>
+          <tr><td><kbd>1</kbd> – <kbd>9</kbd>, <kbd>0</kbd></td><td>O sıradaki kartı çal</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>Acil: sesi yumuşakça kıs ve durdur</td></tr>
+          <tr><td><kbd>K</kbd></td><td>Anında kes</td></tr>
+          <tr><td><kbd>N</kbd> / <kbd>P</kbd></td><td>Sonraki / önceki parça</td></tr>
+          <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>5 sn geri / ileri (<kbd>Shift</kbd> ile 30 sn)</td></tr>
+          <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>Ana sesi %5 arttır / azalt</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>+</kbd> / <kbd>−</kbd></td><td>Kartları büyüt / küçült</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>F</kbd></td><td>Bütün kartları ekrana sığdır</td></tr>
+          <tr><td><kbd>F11</kbd></td><td>Tam ekran</td></tr>
+          <tr><td><kbd>F1</kbd></td><td>Yardım</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="kap">
+      <h2>Normal boyutta görünüm</h2>
+      <p class="bolum-alt">Az sayıda parçayla çalışırken kartlar iyice büyür.</p>
+      <div class="ekran" style="margin-top:0">
+        <img src="ekran-goruntusu.png" alt="Normal boyutta kart görünümü" loading="lazy">
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="kap">
+    Kaynak kodu ve sürümler:
+    <a href="https://github.com/msoguz44/cumhuriyet-ses-konsolu">github.com/msoguz44/cumhuriyet-ses-konsolu</a><br>
+    Ne mutlu Türküm diyene.
+  </div>
+</footer>
+
+</body>
+</html>
