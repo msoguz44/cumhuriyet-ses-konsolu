@@ -87,6 +87,7 @@ yoksa tek dosyalık çalıştırılabilir yine üretilir.)
 | **Ctrl + Shift + F** | Bütün kartları ekrana sığdır |
 | **Ctrl + T** | Yeni çalma listesi |
 | **Ctrl + Tab** | Sıradaki çalma listesine geç |
+| **F5** | Görünümü tazele (kartlar düzgün dizilmezse) |
 | **F11** | Tam ekran |
 | **F1** | Kısayol yardımı |
 

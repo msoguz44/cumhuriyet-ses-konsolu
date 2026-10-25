@@ -59,6 +59,7 @@ KISAYOLLAR = [
     ("Ctrl + +  /  −", "Kartları büyüt / küçült"),
     ("Ctrl + 0", "Kart boyutunu varsayılana döndür"),
     ("Ctrl + Shift + F", "Bütün kartları ekrana sığdır"),
+    ("F5", "Görünümü tazele (kartlar düzgün dizilmezse)"),
     ("F11", "Tam ekran aç / kapat"),
     ("F1", "Bu yardım penceresi"),
 ]
@@ -277,6 +278,9 @@ class AnaPencere(QWidget):
         self.kaydirma.setWidgetResizable(True)
         self.kaydirma.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.tahta = KartTahtasi()
+        ilke = self.tahta.sizePolicy()
+        ilke.setHeightForWidth(True)
+        self.tahta.setSizePolicy(ilke)
         self.tahta.sona_birakildi.connect(self._sona_tasi)
         self.akis = AkisDuzeni(self.tahta, bosluk=BOSLUK, kenar=KENAR)
         self.tahta.setLayout(self.akis)
@@ -460,6 +464,7 @@ class AnaPencere(QWidget):
         kisayol("Ctrl+F", lambda: (self.arama.setFocus(), self.arama.selectAll()))
         kisayol("F1", self.yardim_goster)
         kisayol("F11", self.tam_ekran_degistir)
+        kisayol("F5", lambda: (self.yerlesimi_tazele(), self._bildir("Görünüm tazelendi.")))
         kisayol("Ctrl+Shift+F", lambda: self.sigdir("hepsi"))
         kisayol("Ctrl+T", self.liste_ekle)
         kisayol("Ctrl+Tab", lambda: self.liste_degistir(
@@ -542,6 +547,11 @@ class AnaPencere(QWidget):
         self._bos_ekran_tazele()
         self._ozet_tazele()
         self._filtre_uygula(self.arama.text())
+        if getattr(self, "_ilk_gosterim", False):
+            self.yerlesimi_tazele()
+        else:
+            self.akis.invalidate()
+            self.akis.activate()
 
     def _siralari_tazele(self):
         for sira, parca in enumerate(self.program.parcalar, start=1):
@@ -987,9 +997,7 @@ class AnaPencere(QWidget):
         self._siralari_tazele()
 
         self._ozet_tazele()
-        self.akis.invalidate()
-        self.tahta.updateGeometry()
-        self.tahta.adjustSize()
+        self.yerlesimi_tazele()
         self._kayit_planla()
 
     def olcegi_degistir(self, fark: float):
@@ -1062,13 +1070,48 @@ class AnaPencere(QWidget):
         yeni = self._en_iyi_olcek(adet)
         if abs(yeni - self._olcek) >= 0.01:
             self.olcek_uygula(yeni)
+        else:
+            QTimer.singleShot(0, self._ust_uste_kontrol)
+
+    def yerlesimi_tazele(self):
+        """Kart tahtasını yeniden hesaplatır ve kartların üst üste binmediğini doğrular."""
+        self.akis.invalidate()
+        self.akis.activate()
+        self.tahta.updateGeometry()
+        if self.tahta.width() > 200:
+            self.akis.setGeometry(self.tahta.rect())
+        QTimer.singleShot(0, self._ust_uste_kontrol)
+
+    def _ust_uste_kontrol(self):
+        """Bazı sistemlerde ilk açılışta yerleşim takılıp kartlar üst üste binebiliyor;
+        böyle bir durum görülürse kartlar sessizce yeniden kurulur."""
+        gorunur = [k for k in self.kartlar.values() if not k.isHidden()]
+        if len(gorunur) < 2:
+            return
+        konumlar = {(k.pos().x(), k.pos().y()) for k in gorunur}
+        if len(konumlar) >= len(gorunur):
+            self._onarim_sayisi = 0
+            return
+        if getattr(self, "_onarim_sayisi", 0) >= 2:
+            return
+        self._onarim_sayisi = getattr(self, "_onarim_sayisi", 0) + 1
+        self._kartlari_kur()
+        self.akis.invalidate()
+        self.akis.activate()
+        if self.tahta.width() > 200:
+            self.akis.setGeometry(self.tahta.rect())
 
     def showEvent(self, olay):
         super().showEvent(olay)
         if not getattr(self, "_ilk_gosterim", False):
             self._ilk_gosterim = True
+            QTimer.singleShot(0, self.yerlesimi_tazele)
             if self._sigdir_hedef:
                 QTimer.singleShot(60, self._sigdiri_yenile)
+            # Açılışta yerleşim takılırsa kendini onarsın
+            QTimer.singleShot(150, self.yerlesimi_tazele)
+            QTimer.singleShot(600, self._ust_uste_kontrol)
+            QTimer.singleShot(1500, self._ust_uste_kontrol)   # yavaş makineler için
 
     def resizeEvent(self, olay):
         super().resizeEvent(olay)
@@ -1088,6 +1131,8 @@ class AnaPencere(QWidget):
         menu.addSeparator()
         self._boyut_menusu(menu)
         menu.addAction("Tam ekran\tF11", self.tam_ekran_degistir)
+        menu.addAction("Görünümü tazele\tF5",
+                       lambda: (self.yerlesimi_tazele(), self._bildir("Görünüm tazelendi.")))
         menu.addSeparator()
         menu.addAction("Listeyi dosyaya aktar…\tCtrl S", self.programi_aktar)
         menu.addAction("Dosyadan liste al…", self.programi_al)
