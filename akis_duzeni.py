@@ -56,7 +56,10 @@ class AkisDuzeni(QLayout):
         x, y, satir_yuksekligi = alan.x(), alan.y(), 0
 
         for oge in self._ogeler:
-            if not oge.widget().isVisible():
+            # isVisible() pencere gösterilmeden önce bütün kartlar için False
+            # döner; o anda yerleştirme yapılmazsa kartlar üst üste kalırdı.
+            # isHidden() yalnızca elle gizlenenler (arama filtresi) için True.
+            if oge.widget().isHidden():
                 continue
             ebat = oge.sizeHint()
             sonraki = x + ebat.width() + self._bosluk

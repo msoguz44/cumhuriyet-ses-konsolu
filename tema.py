@@ -200,9 +200,9 @@ QSpinBox {
 QSpinBox::up-button, QSpinBox::down-button { width: 14px; background-color: #1B2133; border: none; }
 
 QScrollArea { border: none; background-color: transparent; }
-QScrollBar:vertical { background: transparent; width: 12px; margin: 4px; }
-QScrollBar::handle:vertical { background: #313A54; border-radius: 6px; min-height: 40px; }
-QScrollBar::handle:vertical:hover { background: #46516F; }
+QScrollBar:vertical { background: #10141F; width: 14px; margin: 2px; border-radius: 7px; }
+QScrollBar::handle:vertical { background: #4A5572; border-radius: 6px; min-height: 48px; }
+QScrollBar::handle:vertical:hover { background: #63708F; }
 QScrollBar::add-line, QScrollBar::sub-line, QScrollBar::add-page, QScrollBar::sub-page { background: none; border: none; }
 
 QMenu {

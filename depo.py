@@ -53,23 +53,105 @@ class Parca:
 
 
 @dataclass
-class Program:
+class Liste:
+    """Bir çalma listesi (tören programı). Hepsi uygulamanın içinde saklanır."""
+
+    ad: str = "Program"
+    id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
     parcalar: list = field(default_factory=list)
+
+    @property
+    def toplam_ms(self) -> int:
+        return sum(p.sure_ms for p in self.parcalar)
+
+    def sozluk(self) -> dict:
+        return {"id": self.id, "ad": self.ad,
+                "parcalar": [p.sozluk() for p in self.parcalar]}
+
+    @staticmethod
+    def sozlukten(veri: dict) -> "Liste":
+        liste = Liste(ad=str(veri.get("ad") or "Program"))
+        if veri.get("id"):
+            liste.id = str(veri["id"])
+        liste.parcalar = [Parca.sozlukten(p) for p in veri.get("parcalar", [])]
+        return liste
+
+    def kopyala(self, yeni_ad: str) -> "Liste":
+        kopya = Liste(ad=yeni_ad)
+        for p in self.parcalar:
+            veri = p.sozluk()
+            veri.pop("id", None)
+            kopya.parcalar.append(Parca.sozlukten(veri))
+        return kopya
+
+
+@dataclass
+class Program:
+    """Uygulamanın bütün hâli: listeler ve ortak ayarlar."""
+
+    listeler: list = field(default_factory=lambda: [Liste()])
+    aktif: int = 0
     ana_ses: int = 85
     fade_ms: int = 1200
     oto_gecis: bool = False
     olcek: float = 1.0           # kart boyutu çarpanı
-    sigdir: str = ""             # "" | "hepsi" | "12" | "20" ... (otomatik sığdırma)
+    sigdir: str = "hepsi"        # "" | "hepsi" | "12" | "20" ... (otomatik sığdırma)
+    elle_boyut: bool = False     # kullanıcı boyutu elle ayarladıysa otomatik sığdırma kapanır
 
+    # ----------------------------------------------------------- listeler
+    def __post_init__(self):
+        if not self.listeler:
+            self.listeler = [Liste()]
+        self.aktif = max(0, min(self.aktif, len(self.listeler) - 1))
+
+    @property
+    def aktif_liste(self) -> Liste:
+        self.aktif = max(0, min(self.aktif, len(self.listeler) - 1))
+        return self.listeler[self.aktif]
+
+    @property
+    def parcalar(self) -> list:
+        """Etkin listenin parçaları (yerinde değiştirilebilir)."""
+        return self.aktif_liste.parcalar
+
+    def liste_ekle(self, ad: str, parcalar: list | None = None) -> int:
+        self.listeler.append(Liste(ad=ad, parcalar=parcalar or []))
+        return len(self.listeler) - 1
+
+    def liste_sil(self, sira: int):
+        if 0 <= sira < len(self.listeler):
+            self.listeler.pop(sira)
+        if not self.listeler:
+            self.listeler = [Liste()]
+        self.aktif = max(0, min(self.aktif, len(self.listeler) - 1))
+
+    def liste_bul(self, liste_id: str) -> int:
+        for i, liste in enumerate(self.listeler):
+            if liste.id == liste_id:
+                return i
+        return -1
+
+    def benzersiz_ad(self, istek: str) -> str:
+        adlar = {l.ad for l in self.listeler}
+        if istek not in adlar:
+            return istek
+        n = 2
+        while f"{istek} ({n})" in adlar:
+            n += 1
+        return f"{istek} ({n})"
+
+    # ------------------------------------------------------------ kayıt
     def sozluk(self) -> dict:
         return {
-            "surum": 1,
+            "surum": 2,
             "ana_ses": self.ana_ses,
             "fade_ms": self.fade_ms,
             "oto_gecis": self.oto_gecis,
             "olcek": self.olcek,
             "sigdir": self.sigdir,
-            "parcalar": [p.sozluk() for p in self.parcalar],
+            "elle_boyut": self.elle_boyut,
+            "aktif": self.aktif,
+            "listeler": [l.sozluk() for l in self.listeler],
         }
 
     @staticmethod
@@ -79,8 +161,20 @@ class Program:
         prg.fade_ms = int(veri.get("fade_ms", 1200))
         prg.oto_gecis = bool(veri.get("oto_gecis", False))
         prg.olcek = float(veri.get("olcek", 1.0) or 1.0)
-        prg.sigdir = str(veri.get("sigdir", "") or "")
-        prg.parcalar = [Parca.sozlukten(p) for p in veri.get("parcalar", [])]
+        prg.elle_boyut = bool(veri.get("elle_boyut", False))
+        # Eski dosyalarda sığdırma yoktu; kartlar ekrana sığsın diye açık geliyor.
+        prg.sigdir = str(veri.get("sigdir", "hepsi") or ("" if prg.elle_boyut else "hepsi"))
+
+        if veri.get("listeler"):
+            prg.listeler = [Liste.sozlukten(l) for l in veri["listeler"]]
+        elif veri.get("parcalar"):
+            # Eski tek listeli dosya: olduğu gibi tek listeye taşınır.
+            prg.listeler = [Liste(ad="Program",
+                                  parcalar=[Parca.sozlukten(p) for p in veri["parcalar"]])]
+        else:
+            prg.listeler = [Liste()]
+        prg.aktif = int(veri.get("aktif", 0) or 0)
+        prg.__post_init__()
         return prg
 
 

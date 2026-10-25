@@ -57,7 +57,8 @@ yoksa tek dosyalık çalıştırılabilir yine üretilir.)
 
 | İş | Nasıl |
 |---|---|
-| Müzik ekleme | **＋ Müzik Ekle** düğmesi, **☰ Menü → Klasör ekle** ya da dosyaları pencereye **sürükleyip bırakma** |
+| Müzik ekleme | **＋ Müzik Ekle** (Ctrl/⌘ ya da Shift ile **birden fazla dosya** seçin), **📁 Klasör** düğmesi ya da dosyaları pencereye **sürükleyip bırakma** |
+| Çalma listeleri | **📋 Liste** düğmesi: listeler arası geçiş, yeni liste, yeniden adlandır, çoğalt, sil |
 | Çal / duraklat | Kartın üzerindeki büyük ▶ düğmesi (ya da karta çift tıklama) |
 | Devam ettirme | Aynı düğmeye tekrar basmak — parça kaldığı yerden devam eder |
 | Durdurma | Karttaki ■ düğmesi veya alttaki kırmızı **DURDUR** (ses yumuşakça kısılır) |
@@ -84,10 +85,24 @@ yoksa tek dosyalık çalıştırılabilir yine üretilir.)
 | **Ctrl + +** / **Ctrl + −** | Kartları büyüt / küçült |
 | **Ctrl + 0** | Kart boyutunu varsayılana döndür |
 | **Ctrl + Shift + F** | Bütün kartları ekrana sığdır |
+| **Ctrl + T** | Yeni çalma listesi |
+| **Ctrl + Tab** | Sıradaki çalma listesine geç |
 | **F11** | Tam ekran |
 | **F1** | Kısayol yardımı |
 
 ---
+
+## Çalma listeleri
+
+Birden çok program tutabilirsiniz: “29 Ekim Töreni”, “Prova”, “Ara Müzikleri” gibi.
+Üstteki **📋 Liste** düğmesinden liste ekler, adını değiştirir, çoğaltır veya silersiniz;
+listeler arasında geçmek tek tıktır (**Ctrl+Tab**). Bir kartı başka listeye taşımak ya da
+kopyalamak için kartın **⋯** menüsünü kullanın.
+
+**Listeler uygulamanın içinde saklanır** — kaydet demenize gerek yok, program kapansa da
+durur. Başka bir bilgisayara taşımak isterseniz **📋 Liste → Listeyi dosyaya aktar** ile
+tek dosya olarak alır, karşı tarafta **Dosyadan liste al** ile eklersiniz (var olan
+listelerin üzerine yazmaz, yanına ekler).
 
 ## Ekranı müziklere ayırmak
 
@@ -105,8 +120,11 @@ sıra numarası, ilerleme çubuğu ve çal düğmesi her boyutta kalır.** Müzi
 baskın yazısıdır: her kart, adı kendi kutusuna sığan **en büyük punto** ile yazar, uzun adlar
 iki satıra kayar. Küçük kartlarda gizlenen döngü ayarına kartın **⋯** menüsünden ulaşabilirsiniz.
 
-Seçtiğiniz tercih kaydedilir: uygulamayı yeniden açtığınızda ya da pencereyi
-büyütüp küçülttüğünüzde kartlar kendiliğinden yeniden ayarlanır.
+Kart boyutu **varsayılan olarak otomatiktir**: uygulama açıldığında, pencere boyutu
+değiştiğinde veya müzik eklendiğinde kartlar ekrana sığacak biçimde yeniden ayarlanır.
+Boyutu elle değiştirirseniz otomatik ayar kapanır; tekrar açmak için
+**☰ Menü → Kart boyutu → Bütün kartları ekrana sığdır** deyin. Hepsi sığmıyorsa üst şeritte
+“↓ 8/15 görünüyor, kaydırın” uyarısı çıkar.
 Tipik bir 1920×1080 ekranda 20 kart, adları rahat okunacak boyutta sığar.
 
 ## Tören için küçük notlar

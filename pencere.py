@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 from PySide6.QtCore import QPoint, Qt, QTimer, QUrl, Signal
-from PySide6.QtGui import QDesktopServices, QKeySequence, QShortcut
+from PySide6.QtGui import QDesktopServices, QGuiApplication, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QCheckBox, QDialog, QFileDialog, QFrame, QGridLayout, QHBoxLayout,
     QInputDialog, QLabel, QLineEdit, QMenu, QMessageBox, QProgressBar,
@@ -22,7 +22,7 @@ from kart import (EN_BUYUK_OLCEK, EN_KUCUK_OLCEK, MIME, ParcaKart,
 from ses_motoru import SesMotoru
 from simge import uygulama_simgesi
 from tema import KART_RENKLERI, QSS, RENKLER
-from yardimci import odagi_kapat, sure_metni
+from yardimci import kisalt, odagi_kapat, sure_metni
 
 KENAR = 18      # kart tahtasının kenar boşluğu
 BOSLUK = 16     # kartlar arası boşluk
@@ -50,7 +50,9 @@ KISAYOLLAR = [
     ("← / →", "5 saniye geri / ileri sar"),
     ("Shift + ← / →", "30 saniye geri / ileri sar"),
     ("↑ / ↓", "Ana sesi %5 arttır / azalt"),
-    ("Ctrl + O", "Müzik dosyası ekle"),
+    ("Ctrl + O", "Müzik dosyası ekle (birden fazla seçebilirsiniz)"),
+    ("Ctrl + T", "Yeni çalma listesi"),
+    ("Ctrl + Tab", "Sıradaki çalma listesine geç"),
     ("Ctrl + Shift + O", "Klasör ekle"),
     ("Ctrl + F", "Arama kutusuna git"),
     ("Ctrl + S", "Programı yedek dosyaya kaydet"),
@@ -115,7 +117,12 @@ class YardimPenceresi(QDialog):
 
         ipucu = QLabel(
             "İpuçları:\n"
-            "•  Dosyaları ya da klasörleri doğrudan pencereye sürükleyip bırakabilirsiniz.\n"
+            "•  Dosyaları ya da klasörleri doğrudan pencereye sürükleyip bırakabilirsiniz;\n"
+            "   “＋ Müzik Ekle” penceresinde Ctrl/⌘ ya da Shift ile birden fazla dosya seçin.\n"
+            "•  Üstteki “📋 Liste” düğmesi çalma listelerini yönetir: birden çok program\n"
+            "   (tören, prova, ara müzikleri…) tutabilir, aralarında anında geçebilirsiniz.\n"
+            "   Listeler uygulamanın içinde saklanır; ayrıca dosyaya aktarılabilir.\n"
+            "•  Bir kartı başka listeye taşımak/kopyalamak için kartın ⋯ menüsünü kullanın.\n"
             "•  Kartları tutup başka bir kartın üzerine sürükleyerek sırayı değiştirin;\n"
             "   boş alana bırakılan kart listenin sonuna gider.\n"
             "•  “☰ Menü → Kart boyutu” ile kartları büyütüp küçültebilir, bütün kartları\n"
@@ -140,8 +147,14 @@ class AnaPencere(QWidget):
         super().__init__()
         self.setObjectName("Kok")
         self.setWindowTitle("Cumhuriyet Ses Konsolu — 29 Ekim")
-        self.setMinimumSize(1060, 720)
-        self.resize(1360, 880)
+        # Küçük ya da ölçekli (%125-150) ekranlarda pencere taşmasın:
+        # boyut her zaman ekrana sığacak biçimde seçilir.
+        self.setMinimumSize(820, 520)
+        alan = QGuiApplication.primaryScreen().availableGeometry()
+        self.resize(min(1360, max(820, alan.width() - 40)),
+                    min(880, max(520, alan.height() - 60)))
+        self.move(alan.center().x() - self.width() // 2,
+                  alan.center().y() - self.height() // 2)
         self.setAcceptDrops(True)
         self.setStyleSheet(QSS)
 
@@ -178,6 +191,7 @@ class AnaPencere(QWidget):
         self._kartlari_kur()
         self._saat_kur()
         self._fade_degisti(self.fade_surgu.value())
+        self._liste_dugmesi_tazele()
         self.olcek_uygula(self._olcek)
         self._konsol_tazele()
 
@@ -214,6 +228,16 @@ class AnaPencere(QWidget):
         btn_ekle.setToolTip("Müzik dosyası ekle (Ctrl+O)")
         btn_ekle.clicked.connect(self.muzik_ekle)
         duzen.addWidget(btn_ekle)
+
+        btn_klasor = QPushButton("\U0001F4C1  Klasör")
+        btn_klasor.setToolTip("Bir klasördeki bütün müzikleri ekle (Ctrl+Shift+O)")
+        btn_klasor.clicked.connect(self.klasor_ekle)
+        duzen.addWidget(btn_klasor)
+
+        self.btn_liste = QPushButton("Liste")
+        self.btn_liste.setToolTip("Çalma listeleri: değiştir, ekle, sil")
+        self.btn_liste.clicked.connect(self._liste_menusu)
+        duzen.addWidget(self.btn_liste)
 
         self.btn_menu = QPushButton("\u2630  Menü")
         self.btn_menu.setToolTip("Bütün ayarlar ve işlemler")
@@ -270,8 +294,9 @@ class AnaPencere(QWidget):
         b1 = QLabel("Henüz müzik eklenmedi")
         b1.setObjectName("BosBaslik")
         b1.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        b2 = QLabel("Müzik dosyalarını buraya sürükleyip bırakın\n"
-                    "ya da yukarıdaki “Müzik Ekle” düğmesini kullanın.")
+        b2 = QLabel("Müzik dosyalarını ya da bir klasörü buraya sürükleyip bırakın;\n"
+                    "“＋ Müzik Ekle” ile birden fazla dosyayı birlikte seçebilir,\n"
+                    "“📁 Klasör” ile bir klasörün tamamını ekleyebilirsiniz.")
         b2.setObjectName("BosYazi")
         b2.setAlignment(Qt.AlignmentFlag.AlignCenter)
         bos_duzen.addWidget(simge)
@@ -283,6 +308,7 @@ class AnaPencere(QWidget):
     # -------------------------------------------------------------- alt konsol
     def _alt_konsol(self) -> QFrame:
         konsol = QFrame()
+        self.konsol = konsol
         konsol.setObjectName("AltKonsol")
         konsol.setFixedHeight(126)
         duzen = QHBoxLayout(konsol)
@@ -435,6 +461,9 @@ class AnaPencere(QWidget):
         kisayol("F1", self.yardim_goster)
         kisayol("F11", self.tam_ekran_degistir)
         kisayol("Ctrl+Shift+F", lambda: self.sigdir("hepsi"))
+        kisayol("Ctrl+T", self.liste_ekle)
+        kisayol("Ctrl+Tab", lambda: self.liste_degistir(
+            (self.program.aktif + 1) % max(1, len(self.program.listeler))))
         kisayol("Ctrl+0", lambda: self.olcek_uygula(1.0, elle=True))
         for dizi in ("Ctrl++", "Ctrl+=", "Ctrl+Shift+="):
             kisayol(dizi, lambda: self.olcegi_degistir(0.08))
@@ -537,10 +566,24 @@ class AnaPencere(QWidget):
             boyut = f"KART: {self._sigdir_hedef}'LİK"
         else:
             boyut = f"KART %{int(round(self._olcek * 100))}"
-        metin = f"{adet} PARÇA  •  {sure_metni(toplam)}  •  {boyut}"
+        try:
+            sigan = self._kac_sigiyor()
+        except AttributeError:
+            sigan = adet
         eksik = sum(1 for p in self.program.parcalar if not p.var_mi)
-        if eksik:
-            metin += f"  •  {eksik} DOSYA YOK"
+
+        if self.width() < 1180:                       # dar pencere: kısa biçim
+            metin = f"{adet} PARÇA"
+            if sigan < adet:
+                metin += f"  •  \u2193 {sigan}/{adet}"
+            if eksik:
+                metin += f"  •  {eksik} DOSYA YOK"
+        else:
+            metin = f"{adet} PARÇA  •  {sure_metni(toplam)}  •  {boyut}"
+            if sigan < adet:
+                metin += f"  •  \u2193 {sigan}/{adet} GÖRÜNÜYOR, KAYDIRIN"
+            if eksik:
+                metin += f"  •  {eksik} DOSYA YOK"
         self.lbl_ozet.setText(metin)
 
     def _filtre_uygula(self, metin: str):
@@ -560,13 +603,14 @@ class AnaPencere(QWidget):
     # ------------------------------------------------------------- parça ekle
     def muzik_ekle(self):
         dosyalar, _ = QFileDialog.getOpenFileNames(
-            self, "Müzik dosyalarını seçin", str(Path.home()), SES_FILTRESI)
+            self, "Müzik dosyalarını seçin  —  birden fazla seçebilirsiniz "
+                  "(Ctrl/⌘ ya da Shift ile)", str(Path.home()), SES_FILTRESI)
         if dosyalar:
             self.parcalari_ekle(dosyalar)
 
     def klasor_ekle(self):
         klasor = QFileDialog.getExistingDirectory(
-            self, "Müzik klasörünü seçin", str(Path.home()))
+            self, "Klasörü seçin  —  içindeki bütün müzikler eklenir", str(Path.home()))
         if not klasor:
             return
         bulunan = depo.klasordeki_sesler(klasor)
@@ -677,6 +721,18 @@ class AnaPencere(QWidget):
         if sira < len(self.program.parcalar) - 1:
             menu.addAction("→  Sağa taşı", lambda: self._tasi(sira, sira + 1))
         menu.addAction("Başa al", lambda: self._tasi(sira, 0))
+
+        if len(self.program.listeler) > 1:
+            menu.addSeparator()
+            tasi_menu = menu.addMenu("Başka listeye taşı")
+            kopya_menu = menu.addMenu("Başka listeye kopyala")
+            for i, liste in enumerate(self.program.listeler):
+                if i == self.program.aktif:
+                    continue
+                tasi_menu.addAction(liste.ad,
+                                    lambda _c=False, h=i: self._parcayi_listeye(parca_id, h, True))
+                kopya_menu.addAction(liste.ad,
+                                     lambda _c=False, h=i: self._parcayi_listeye(parca_id, h, False))
 
         menu.addSeparator()
         if parca.var_mi:
@@ -796,6 +852,125 @@ class AnaPencere(QWidget):
             self._kayit_planla()
             self._bildir("Dosya yeniden bağlandı.")
 
+    # ================================================================ LİSTELER
+    def _liste_dugmesi_tazele(self):
+        liste = self.program.aktif_liste
+        toplam = len(self.program.listeler)
+        ad = kisalt(liste.ad, 22)
+        self.btn_liste.setText(f"\U0001F4CB  {ad}  \u25BE")
+        self.btn_liste.setToolTip(
+            f"Etkin liste: {liste.ad}  ({len(liste.parcalar)} parça)\n"
+            f"Toplam {toplam} liste — değiştirmek için tıklayın")
+
+    def _liste_menusu(self):
+        menu = QMenu(self)
+        baslik = menu.addAction("ÇALMA LİSTELERİ")
+        baslik.setEnabled(False)
+        for sira, liste in enumerate(self.program.listeler):
+            isaret = "\u25CF  " if sira == self.program.aktif else "\u25CB  "
+            eylem = menu.addAction(f"{isaret}{liste.ad}   ({len(liste.parcalar)} parça)")
+            eylem.triggered.connect(lambda _c=False, i=sira: self.liste_degistir(i))
+        menu.addSeparator()
+        menu.addAction("\u2795  Yeni liste…", self.liste_ekle)
+        menu.addAction("Listeyi yeniden adlandır…", self.liste_adlandir)
+        menu.addAction("Listeyi çoğalt", self.liste_cogalt)
+        sil = menu.addAction("\U0001F5D1  Listeyi sil…")
+        sil.triggered.connect(self.liste_sil)
+        sil.setEnabled(len(self.program.listeler) > 1)
+        menu.addSeparator()
+        menu.addAction("Listeyi dosyaya aktar…", self.programi_aktar)
+        menu.addAction("Dosyadan liste al…", self.programi_al)
+        menu.exec(self.btn_liste.mapToGlobal(QPoint(0, self.btn_liste.height() + 4)))
+
+    def liste_degistir(self, sira: int):
+        if sira == self.program.aktif or not (0 <= sira < len(self.program.listeler)):
+            return
+        self.motor.durdur(fade_ms=250)
+        self.program.aktif = sira
+        self.arama.clear()
+        self._kartlari_kur()
+        self._sigdiri_yenile()
+        self._liste_dugmesi_tazele()
+        self._konsol_tazele()
+        self._kayit_planla()
+        self._bildir(f"“{self.program.aktif_liste.ad}” listesine geçildi.")
+
+    def liste_ekle(self):
+        ad, tamam = QInputDialog.getText(
+            self, "Yeni liste", "Liste adı:", QLineEdit.EchoMode.Normal,
+            self.program.benzersiz_ad("Yeni Liste"))
+        if not (tamam and ad.strip()):
+            return
+        self.motor.durdur(fade_ms=250)
+        sira = self.program.liste_ekle(self.program.benzersiz_ad(ad.strip()))
+        self.program.aktif = sira
+        self.arama.clear()
+        self._kartlari_kur()
+        self._liste_dugmesi_tazele()
+        self._konsol_tazele()
+        self._kaydet()
+        self._bildir("Yeni liste oluşturuldu; müzikleri ekleyebilirsiniz.")
+
+    def liste_adlandir(self):
+        liste = self.program.aktif_liste
+        ad, tamam = QInputDialog.getText(self, "Listeyi yeniden adlandır", "Liste adı:",
+                                         QLineEdit.EchoMode.Normal, liste.ad)
+        if tamam and ad.strip():
+            liste.ad = ad.strip()
+            self._liste_dugmesi_tazele()
+            self._kaydet()
+
+    def liste_cogalt(self):
+        kaynak = self.program.aktif_liste
+        kopya = kaynak.kopyala(self.program.benzersiz_ad(kaynak.ad + " kopyası"))
+        self.program.listeler.insert(self.program.aktif + 1, kopya)
+        self.program.aktif += 1
+        self._kartlari_kur()
+        self._liste_dugmesi_tazele()
+        self._konsol_tazele()
+        self._kaydet()
+        self._bildir(f"“{kopya.ad}” oluşturuldu.")
+
+    def liste_sil(self):
+        if len(self.program.listeler) <= 1:
+            self._bildir("Tek liste silinemez; önce yeni bir liste oluşturun.")
+            return
+        liste = self.program.aktif_liste
+        cevap = QMessageBox.question(
+            self, "Listeyi sil",
+            f"“{liste.ad}” listesi silinsin mi?\n"
+            f"İçindeki {len(liste.parcalar)} kart kaldırılır. "
+            "(Müzik dosyaları bilgisayardan silinmez.)")
+        if cevap != QMessageBox.StandardButton.Yes:
+            return
+        self.motor.hemen_kes()
+        self.program.liste_sil(self.program.aktif)
+        self.arama.clear()
+        self._kartlari_kur()
+        self._sigdiri_yenile()
+        self._liste_dugmesi_tazele()
+        self._konsol_tazele()
+        self._kaydet()
+        self._bildir("Liste silindi.")
+
+    def _parcayi_listeye(self, parca_id: str, hedef_sira: int, tasi: bool):
+        sira, parca = self._parca_bul(parca_id)
+        if parca is None or not (0 <= hedef_sira < len(self.program.listeler)):
+            return
+        hedef = self.program.listeler[hedef_sira]
+        if tasi:
+            if self.motor.aktif_id == parca_id:
+                self.motor.hemen_kes()
+            hedef.parcalar.append(self.program.parcalar.pop(sira))
+        else:
+            veri = parca.sozluk()
+            veri.pop("id", None)
+            hedef.parcalar.append(Parca.sozlukten(veri))
+        self._kartlari_kur()
+        self._konsol_tazele()
+        self._kaydet()
+        self._bildir(f"Parça “{hedef.ad}” listesine {'taşındı' if tasi else 'kopyalandı'}.")
+
     # ================================================================= BOYUT
     def olcek_uygula(self, olcek: float, elle: bool = False):
         """Bütün kartları verilen boyut çarpanına göre yeniden ölçekler."""
@@ -803,6 +978,7 @@ class AnaPencere(QWidget):
         self._olcek = yeni
         if elle:
             self._sigdir_hedef = ""
+            self.program.elle_boyut = True
         self.program.olcek = yeni
         self.program.sigdir = self._sigdir_hedef
 
@@ -836,6 +1012,7 @@ class AnaPencere(QWidget):
     def sigdir(self, hedef: str = "hepsi"):
         """hedef: 'hepsi' ya da ekranda görünmesi istenen kart sayısı."""
         self._sigdir_hedef = hedef
+        self.program.elle_boyut = False
         adet = len(self.program.parcalar) if hedef == "hepsi" else int(hedef)
         if adet <= 0:
             self._sigdir_hedef = ""
@@ -895,6 +1072,12 @@ class AnaPencere(QWidget):
 
     def resizeEvent(self, olay):
         super().resizeEvent(olay)
+        # Alçak ekranlarda konsolu daraltıp yeri kartlara ver
+        kisa = self.height() < 680
+        self.konsol.setFixedHeight(100 if kisa else 126)
+        self.ritim.setVisible(not kisa)
+        self.arama.setVisible(self.width() >= 1020)
+        self._ozet_tazele()
         self._yeniden_sigdir_zamani.start()
 
     # ================================================================ PROGRAM
@@ -906,43 +1089,54 @@ class AnaPencere(QWidget):
         self._boyut_menusu(menu)
         menu.addAction("Tam ekran\tF11", self.tam_ekran_degistir)
         menu.addSeparator()
-        menu.addAction("Programı dosyaya kaydet…\tCtrl S", self.programi_aktar)
-        menu.addAction("Program dosyası yükle…", self.programi_al)
+        menu.addAction("Listeyi dosyaya aktar…\tCtrl S", self.programi_aktar)
+        menu.addAction("Dosyadan liste al…", self.programi_al)
         menu.addAction("Süreleri yeniden oku", self._sureleri_tazele)
         menu.addSeparator()
-        menu.addAction("Tüm listeyi temizle", self._listeyi_temizle)
+        menu.addAction("Bu listenin kartlarını temizle", self._listeyi_temizle)
         menu.addSeparator()
         menu.addAction("Kısayollar ve ipuçları\tF1", self.yardim_goster)
         menu.exec(self.btn_menu.mapToGlobal(QPoint(0, self.btn_menu.height() + 4)))
 
     def programi_aktar(self):
+        """Etkin listeyi yedek dosyası olarak dışarı aktarır (başka bilgisayara taşımak için)."""
+        liste = self.program.aktif_liste
+        guvenli = "".join(c for c in liste.ad if c.isalnum() or c in " -_").strip() or "liste"
         yol, _ = QFileDialog.getSaveFileName(
-            self, "Programı kaydet",
-            str(Path.home() / "cumhuriyet-programi.json"), "Program dosyası (*.json)")
-        if yol:
-            depo.kaydet(self.program, Path(yol))
-            self._bildir(f"Program kaydedildi: {os.path.basename(yol)}")
-
-    def programi_al(self):
-        yol, _ = QFileDialog.getOpenFileName(
-            self, "Program dosyası seç", str(Path.home()), "Program dosyası (*.json)")
+            self, "Listeyi dosyaya aktar",
+            str(Path.home() / f"{guvenli}.json"), "Liste dosyası (*.json)")
         if not yol:
             return
-        yeni = depo.yukle(Path(yol))
-        if not yeni.parcalar:
+        dis = Program(listeler=[liste], ana_ses=self.program.ana_ses,
+                      fade_ms=self.program.fade_ms, oto_gecis=self.program.oto_gecis,
+                      olcek=self.program.olcek, sigdir=self.program.sigdir)
+        depo.kaydet(dis, Path(yol))
+        self._bildir(f"“{liste.ad}” listesi kaydedildi: {os.path.basename(yol)}")
+
+    def programi_al(self):
+        """Dosyadaki listeleri, mevcut listelerin yanına yeni liste olarak ekler."""
+        yol, _ = QFileDialog.getOpenFileName(
+            self, "Liste dosyası seç", str(Path.home()), "Liste dosyası (*.json)")
+        if not yol:
+            return
+        gelen = depo.yukle(Path(yol))
+        dolu = [l for l in gelen.listeler if l.parcalar]
+        if not dolu:
             self._bildir("Dosyada parça bulunamadı.")
             return
-        self.motor.hemen_kes()
-        self.program = yeni
-        self.ses_surgu.setValue(self.program.ana_ses)
-        self.fade_surgu.setValue(self.program.fade_ms)
-        self.oto_kutu.setChecked(self.program.oto_gecis)
-        self._sigdir_hedef = self.program.sigdir or ""
+        self.motor.durdur(fade_ms=250)
+        ilk = len(self.program.listeler)
+        for liste in dolu:
+            liste.ad = self.program.benzersiz_ad(liste.ad)
+            self.program.listeler.append(liste)
+        self.program.aktif = ilk
+        self.arama.clear()
         self._kartlari_kur()
-        self.olcek_uygula(self.program.olcek)
+        self._sigdiri_yenile()
+        self._liste_dugmesi_tazele()
         self._kaydet()
         self._konsol_tazele()
-        self._bildir("Program yüklendi.")
+        self._bildir(f"{len(dolu)} liste eklendi: " + ", ".join(l.ad for l in dolu))
 
     def _sureleri_tazele(self):
         for parca in self.program.parcalar:
@@ -956,8 +1150,9 @@ class AnaPencere(QWidget):
         if not self.program.parcalar:
             return
         cevap = QMessageBox.question(
-            self, "Listeyi temizle",
-            "Bütün parçalar listeden kaldırılsın mı?\n(Dosyalar bilgisayardan silinmez.)")
+            self, "Kartları temizle",
+            f"“{self.program.aktif_liste.ad}” listesindeki bütün kartlar kaldırılsın mı?\n"
+            "(Müzik dosyaları bilgisayardan silinmez.)")
         if cevap != QMessageBox.StandardButton.Yes:
             return
         self.motor.hemen_kes()
