@@ -16,8 +16,17 @@ Windows, macOS ve Linux'ta çalışır; her üçü için de tek dosyalık paket 
 
 ### A) Hazır tek dosya (önerilen — Python gerekmez)
 
-**İndirme:** <https://github.com/msoguz44/cumhuriyet-ses-konsolu/releases/tag/v1.0>
-— giriş yapmadan, doğrudan indirilebilir.
+**İndirme sayfası:** <https://msoguz44.github.io/cumhuriyet-ses-konsolu/>
+(ya da <https://github.com/msoguz44/cumhuriyet-ses-konsolu/releases/latest>)
+— giriş yapmadan, doğrudan indirilebilir. Bağlantılar her zaman **en son sürümü** verir.
+
+Doğrudan indirme (her zaman en güncel sürüm):
+
+| İşletim sistemi | Bağlantı |
+|---|---|
+| Windows | [CumhuriyetSesKonsolu.exe](https://github.com/msoguz44/cumhuriyet-ses-konsolu/releases/latest/download/CumhuriyetSesKonsolu.exe) |
+| macOS | [CumhuriyetSesKonsolu-mac.dmg](https://github.com/msoguz44/cumhuriyet-ses-konsolu/releases/latest/download/CumhuriyetSesKonsolu-mac.dmg) |
+| Linux | [CumhuriyetSesKonsolu](https://github.com/msoguz44/cumhuriyet-ses-konsolu/releases/latest/download/CumhuriyetSesKonsolu) |
 
 | İşletim sistemi | Dosya | Nasıl açılır |
 |---|---|---|
